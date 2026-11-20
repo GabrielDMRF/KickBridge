@@ -1,0 +1,23 @@
+kickbridge:
+  api:
+    url: "https://api.tuservidor.com"
+    token: "TOKEN_INDIVIDUAL_DEL_STREAMER"
+
+  chat:
+    enabled: true
+    require-link: true
+    cooldown: 10
+    max-length: 500
+
+  linking:
+    enabled: true
+    expiration: 300
+
+  messages:
+    prefix: "<gold><bold>KICK</bold> <dark_gray>» <white>"
+    linked: "<green>Cuenta de Kick vinculada correctamente."
+    unlinked: "<yellow>Cuenta de Kick desvinculada."
+    not-linked: "<red>Debes vincular tu cuenta con /kickchat link."
+    sent: "<green>Mensaje enviado correctamente."
+    error: "<red>No se pudo enviar el mensaje."
+    cooldown: "<red>Espera %time% segundos."

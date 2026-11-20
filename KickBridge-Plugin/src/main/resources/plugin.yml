@@ -1,0 +1,29 @@
+name: KickBridge
+version: '${project.version}'
+main: com.kickbridge.plugin.KickBridgePlugin
+api-version: '1.21'
+description: Permite a los jugadores vincular su cuenta personal de Kick y enviar mensajes al chat del streamer.
+authors: [KickBridge]
+
+commands:
+  kickchat:
+    description: Gestiona tu vinculación de Kick o envía un mensaje al chat del streamer.
+    usage: /kickchat <link|unlink|status|mensaje>
+    aliases: [kc]
+
+permissions:
+  kickbridge.link:
+    description: Permite vincular la cuenta de Kick mediante OAuth.
+    default: true
+  kickbridge.unlink:
+    description: Permite desvincular la cuenta de Kick.
+    default: true
+  kickbridge.status:
+    description: Permite consultar el estado de vinculación.
+    default: true
+  kickbridge.chat:
+    description: Permite enviar mensajes al chat de Kick desde Minecraft.
+    default: true
+  kickbridge.admin:
+    description: Permite recargar la configuración de KickBridge.
+    default: op

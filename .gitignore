@@ -1,0 +1,15 @@
+KickBridge-API/.env
+KickBridge-API/.venv/
+KickBridge-API/venv/
+KickBridge-API/__pycache__/
+KickBridge-API/.pytest_cache/
+KickBridge-API/data/
+KickBridge-API/*.db
+KickBridge-API/.mypy_cache/
+KickBridge-API/.ruff_cache/
+KickBridge-Plugin/target/
+KickBridge-Plugin/.idea/
+KickBridge-Plugin/*.iml
+kickbridge-completo/
+kickbridge-completo.zip
+completar_y_empaquetar.py
