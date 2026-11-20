@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>KickBridge</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: "Segoe UI", sans-serif; background: #10141a; color: #eef3f8; }
+    main { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    h1 { margin-bottom: .25rem; }
+    p, li { line-height: 1.5; color: #c5d0dc; }
+    section { background: #181e27; border: 1px solid #2a3442; border-radius: 12px; padding: 1rem 1.1rem; margin-top: 1rem; }
+    label { display: block; margin: .7rem 0 .25rem; font-size: .9rem; }
+    input, button { font: inherit; }
+    input { width: 100%; box-sizing: border-box; padding: .55rem .7rem; border-radius: 8px; border: 1px solid #3a4658; background: #0e131a; color: inherit; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+    button { background: #53fc18; color: #102006; border: 0; border-radius: 8px; padding: .55rem .8rem; cursor: pointer; font-weight: 650; }
+    button.quiet { background: #2a3442; color: #eef3f8; }
+    button.danger { background: #c2414a; color: white; }
+    pre { white-space: pre-wrap; word-break: break-word; background: #0e131a; padding: .8rem; border-radius: 8px; }
+    .token { color: #ffd37a; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>KickBridge</h1>
+  <p>Administración del servidor. El token de administrador no se guarda en el navegador de forma permanente: solo en esta pestaña.</p>
+  <section>
+    <label for="admin">Token de administrador</label>
+    <input id="admin" type="password" autocomplete="off">
+    <div class="row">
+      <button id="save" type="button">Usar en esta pestaña</button>
+      <button id="refresh" class="quiet" type="button">Actualizar lista</button>
+    </div>
+  </section>
+  <section>
+    <h2>Registrar streamer</h2>
+    <label for="name">Nombre</label>
+    <input id="name" maxlength="64">
+    <label for="slug">Slug del canal, opcional</label>
+    <input id="slug" maxlength="25" placeholder="mi-canal">
+    <label for="broadcaster">Broadcaster user ID</label>
+    <input id="broadcaster" inputmode="numeric" placeholder="123">
+    <div class="row">
+      <button id="resolve" class="quiet" type="button">Resolver slug</button>
+      <button id="create" type="button">Crear y mostrar token</button>
+    </div>
+    <pre id="created"></pre>
+  </section>
+  <section>
+    <h2>Streamers</h2>
+    <div id="list"></div>
+  </section>
+  <section>
+    <h2>Detalle</h2>
+    <pre id="detail">Selecciona un streamer.</pre>
+  </section>
+</main>
+<script>
+const admin = document.querySelector("#admin");
+const created = document.querySelector("#created");
+const list = document.querySelector("#list");
+const detail = document.querySelector("#detail");
+
+function token() {
+  return sessionStorage.getItem("kb_admin_token") || "";
+}
+
+document.querySelector("#save").addEventListener("click", () => {
+  sessionStorage.setItem("kb_admin_token", admin.value.trim());
+  admin.value = "";
+  load();
+});
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ "X-Admin-Token": token(), "Accept": "application/json" }, options.headers || {});
+  if (options.body) headers["Content-Type"] = "application/json";
+  const response = await fetch(path, Object.assign({}, options, { headers }));
+  const text = await response.text();
+  let payload = null;
+  if (text) {
+    try { payload = JSON.parse(text); } catch (_err) { payload = { raw: text }; }
+  }
+  if (!response.ok) {
+    const message = payload && payload.error ? payload.error.message : response.statusText;
+    throw new Error(message || "Error");
+  }
+  return payload;
+}
+
+function show(value) {
+  detail.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+}
+
+document.querySelector("#resolve").addEventListener("click", async () => {
+  try {
+    const result = await api("/v1/admin/channels/resolve", { method: "POST", body: JSON.stringify({ slug: document.querySelector("#slug").value.trim() }) });
+    document.querySelector("#broadcaster").value = String(result.broadcaster_user_id);
+    show(result);
+  } catch (error) { show(error.message); }
+});
+
+document.querySelector("#create").addEventListener("click", async () => {
+  try {
+    const result = await api("/v1/admin/streamers", {
+      method: "POST",
+      body: JSON.stringify({
+        name: document.querySelector("#name").value.trim(),
+        kick_broadcaster_user_id: Number(document.querySelector("#broadcaster").value)
+      })
+    });
+    created.textContent = result.api_token
+      ? "Token de un solo vistazo para el plugin:\n" + result.api_token
+      : "Streamer creado.";
+    await load();
+  } catch (error) { created.textContent = error.message; }
+});
+
+async function load() {
+  list.textContent = "";
+  if (!token()) { list.textContent = "Introduce el token de administrador."; return; }
+  try {
+    const streamers = await api("/v1/admin/streamers");
+    streamers.forEach((streamer) => {
+      const box = document.createElement("div");
+      box.style.marginTop = ".8rem";
+      const title = document.createElement("strong");
+      title.textContent = "#" + streamer.id + " " + streamer.name + " · canal " + streamer.kick_broadcaster_user_id + " · " + streamer.status;
+      box.appendChild(title);
+      const row = document.createElement("div");
+      row.className = "row";
+      row.appendChild(button("Cuentas", () => inspect(streamer.id)));
+      row.appendChild(button("Estadísticas", async () => show(await api("/v1/admin/streamers/" + streamer.id + "/stats"))));
+      row.appendChild(button("Rotar token", async () => {
+        const result = await api("/v1/admin/streamers/" + streamer.id + "/rotate-token", { method: "POST" });
+        created.textContent = "Nuevo token:\n" + (result.api_token || "");
+      }, "quiet"));
+      row.appendChild(button("Suspender", () => act(streamer.id, "suspend"), "quiet"));
+      row.appendChild(button("Activar", () => act(streamer.id, "activate"), "quiet"));
+      row.appendChild(button("Revocar", () => act(streamer.id, "revoke"), "danger"));
+      box.appendChild(row);
+      list.appendChild(box);
+    });
+  } catch (error) { list.textContent = error.message; }
+}
+
+function button(label, action, kind) {
+  const element = document.createElement("button");
+  element.type = "button";
+  element.textContent = label;
+  if (kind) element.className = kind;
+  element.addEventListener("click", async () => {
+    try { await action(); } catch (error) { show(error.message); }
+  });
+  return element;
+}
+
+async function act(id, name) {
+  show(await api("/v1/admin/streamers/" + id + "/" + name, { method: "POST" }));
+  await load();
+}
+
+async function inspect(id) {
+  const accounts = await api("/v1/admin/streamers/" + id + "/accounts");
+  detail.textContent = "";
+  if (!accounts.length) { detail.textContent = "No hay cuentas vinculadas."; return; }
+  accounts.forEach((account) => {
+    const line = document.createElement("div");
+    line.style.marginTop = ".6rem";
+    const text = document.createElement("span");
+    text.textContent = account.minecraft_username + " (" + account.minecraft_uuid + ") → " + account.kick_username + " [" + account.kick_user_id + "]";
+    const unlink = button("Desvincular", async () => {
+      await api("/v1/admin/streamers/" + id + "/accounts/" + account.minecraft_uuid, { method: "DELETE" });
+      await inspect(id);
+      await load();
+    }, "danger");
+    line.appendChild(text);
+    line.appendChild(document.createTextNode(" "));
+    line.appendChild(unlink);
+    detail.appendChild(line);
+  });
+}
+
+document.querySelector("#refresh").addEventListener("click", load);
+if (token()) load();
+</script>
+</body>
+</html>
