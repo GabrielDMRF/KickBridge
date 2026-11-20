@@ -11,7 +11,6 @@ Backend en Python 3.12+ (FastAPI + SQLAlchemy + Alembic + SQLite local o Postgre
 
 ## 2. Instalación y migraciones
 ```bash
-cd KickBridge-API
 python -m venv .venv
 source .venv/bin/activate  # En Windows: .venv\Scripts\activate
 pip install -r requirements.txt
@@ -39,7 +38,7 @@ La documentación OAuth describe la renovación mediante `refresh_token`; KickBr
 
 Vercel puede ejecutar FastAPI como funciones Python. **No uses SQLite en Vercel:** el sistema de archivos de las funciones no es almacenamiento persistente. Crea una base PostgreSQL duradera con un proveedor externo y configura `DATABASE_URL` con su URL de conexión (preferiblemente la URL pooled del proveedor). El backend convierte las formas `postgres://` y `postgresql://` a SQLAlchemy con el driver `psycopg` incluido.
 
-1. Importa el repositorio en Vercel y selecciona `KickBridge-API` como **Root Directory**.
+1. Importa el repositorio en Vercel y deja **Root Directory** en la raíz (`/`); este repositorio contiene solo la API.
 2. Configura en Vercel las variables de `.env.example`, reemplazando `DATABASE_URL` por la conexión PostgreSQL y `PUBLIC_BASE_URL` por el dominio HTTPS de producción asignado a la API. No subas el `.env`.
 3. Registra en la aplicación de Kick la Redirect URI exacta `https://<dominio-api>/v1/oauth/callback`.
 4. Aplica la migración contra esa base antes de usar la API: `alembic upgrade head`, ejecutado con las variables de entorno de producción cargadas de forma segura.
