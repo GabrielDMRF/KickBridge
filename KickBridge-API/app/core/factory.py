@@ -20,7 +20,7 @@ from app.services.kick_client import KickClient, KickRequestError
 from app.services.linking import LinkingService
 from app.services.streamers import StreamerService
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
