@@ -4,7 +4,7 @@ Base URL productiva: `https://api.tuservidor.com` (HTTPS obligatorio cuando `REQ
 
 ## Despliegue en Vercel
 
-Configura `KickBridge-API` como Root Directory del proyecto Vercel. Vercel sirve la aplicación FastAPI desde `app/main.py`; el plugin Paper no se despliega en Vercel. Configura `DATABASE_URL` con PostgreSQL duradero y ejecuta `alembic upgrade head` contra esa misma base antes del primer uso. No uses SQLite en Vercel: el almacenamiento local de sus funciones no es persistente. Para desarrollo local, SQLite continúa siendo el valor predeterminado.
+Deja la raíz del repositorio como Root Directory del proyecto Vercel. Vercel sirve la aplicación FastAPI desde `app/main.py`; este repositorio contiene solo la API, no el plugin Paper. Configura `DATABASE_URL` con PostgreSQL duradero y ejecuta `alembic upgrade head` contra esa misma base antes del primer uso. No uses SQLite en Vercel: el almacenamiento local de sus funciones no es persistente. Para desarrollo local, SQLite continúa siendo el valor predeterminado.
 
 ## Autenticación y cabeceras de seguridad
 
